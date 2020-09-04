@@ -3,6 +3,8 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 import glob
+from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 
@@ -79,6 +81,9 @@ def getImg(imgName):
 	#plt.imshow(img3, 'gray'),plt.show()
 
 
+UPLOAD_FOLDER = '/home/arushshah/Documents/imageMatcher/imagesToMatch/'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 @app.route('/')
 def index():
 	return "<h1>Image Matcher</h1>"
@@ -87,11 +92,14 @@ def index():
 def match():
     imgName = request.args.get("imgName", None)
     return getImg(str(imgName))
-    
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    file = request.files['file']
+    if file:
+	filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'],filename))
+        return "File uploaded"
+
 if __name__ == '__main__':
     app.run(threaded=True, port=5000)
-    
-    
-    
-    
-
