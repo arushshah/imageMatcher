@@ -29,8 +29,9 @@ def getImg(imgName):
 
 	IMG2BEST = None
 	imgName = ""
+	dst = None
 
-	for filepath in glob.iglob('imagesToMatch/*'):
+	for filepath in glob.iglob('imagesToMatch/templates/*'):
 	    img2 = cv2.imread(filepath,0)
 	    # find the keypoints and descriptors with SIFT
 	    kp1, des1 = sift.detectAndCompute(img1,None)
@@ -76,8 +77,7 @@ def getImg(imgName):
 		           flags = 2)
 
 	img3 = cv2.drawMatches(img1,MAX_KP1,img2,MAX_KP2,MAX_GOOD,None,**draw_params)
-
-	return imgName
+	return str(imgName) + "," + str(dst[1][0][0]) +"," + str(dst[1][0][1])
 	#plt.imshow(img3, 'gray'),plt.show()
 
 
