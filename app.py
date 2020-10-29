@@ -25,6 +25,7 @@ def getImg(imgName):
 
 	flann = cv2.FlannBasedMatcher(index_params, search_params)
 
+	imgName = "imagesToMatch/" + str(imgName)
 	img1 = cv2.imread(imgName,0) # trainImage
 
 	IMG2BEST = None
@@ -77,11 +78,12 @@ def getImg(imgName):
 		           flags = 2)
 
 	img3 = cv2.drawMatches(img1,MAX_KP1,img2,MAX_KP2,MAX_GOOD,None,**draw_params)
+	plt.imshow(img3, 'gray'),plt.show()
 	return str(imgName) + "," + str(dst[1][0][0]) +"," + str(dst[1][0][1])
 	#plt.imshow(img3, 'gray'),plt.show()
 
 
-UPLOAD_FOLDER = '/home/arushshah/Documents/imageMatcher/imagesToMatch/'
+UPLOAD_FOLDER = '/home/arushshah/imagematcher/imagesToMatch/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/')
@@ -102,4 +104,4 @@ def upload_file():
         return "File uploaded"
 
 if __name__ == '__main__':
-    app.run(threaded=True, port=5000)
+    app.run(host='0.0.0.0', port=5000)
