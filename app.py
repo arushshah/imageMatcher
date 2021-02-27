@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, redirect
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
@@ -81,14 +81,15 @@ def getImg(imgName):
 		           flags = 2)
 
 	img3 = cv2.drawMatches(img1,MAX_KP1,img2,MAX_KP2,MAX_GOOD,None,**draw_params)
-        botLeftX = int(dst[1][0][0])
-        botLeftY = int(dst[1][0][1])
-        botRightX = int(dst[2][0][0])
-        botRightY = int(dst[2][0][1])
+	print(dst)
+        botLeftX = int(dst[2][0][0])
+        botLeftY = int(dst[2][0][1])
+        botRightX = int(dst[3][0][0])
+        botRightY = int(dst[3][0][1])
         img3 = cv2.circle(img2, (botLeftX, botLeftY), 20, (255, 0, 0), 2)
         img3 = cv2.circle(img2, (botRightX, botRightY), 20, (255, 0, 0), 2)
-        xPos = int(botLeftX + (botRightX-botLeftX)/2.0)
-        yPos = int((botLeftY + botRightY)/2.0 + 200)
+        xPos = int(botLeftX + (botRightX-botLeftX)/2.0 + 30)
+        yPos = int((botLeftY + botRightY)/2.0 + 150)
         img3 = cv2.circle(img2, (xPos, yPos), 100, (255, 0, 0), 2)
         plt.imshow(img2, 'gray'),plt.show()
         return str(imgName) + "," + str(xPos) + "," + str(yPos)
@@ -96,6 +97,7 @@ def getImg(imgName):
 
 UPLOAD_FOLDER = '/home/arushshah/imagematcher/imagesToMatch/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+user_choice = None
 
 @app.route('/')
 def index():
@@ -113,6 +115,27 @@ def upload_file():
 	filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'],filename))
         return "File uploaded"
+
+@app.route('/selection', methods=['GET'])
+def get_input():
+	return render_template("input.html")
+
+@app.route('/select', methods=['POST'])
+def process_input():
+	global user_choice
+	user_input = request.form['choice']
+	user_choice = user_input
+	print(user_input)
+	return render_template("input.html")
+
+@app.route('/getUserChoice', methods=['GET'])
+def return_choice():
+	global user_choice
+	if user_choice is None:
+		return "Error"
+	tmp = user_choice
+	user_choice = None
+	return str(tmp)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
