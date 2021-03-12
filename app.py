@@ -5,8 +5,15 @@ from matplotlib import pyplot as plt
 import glob
 from werkzeug.utils import secure_filename
 import os
+import csv
 
 app = Flask(__name__)
+
+UPLOAD_FOLDER = '/home/arushshah/imagematcher/imagesToMatch/'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+user_choice = None
+cur_screen = None
+screen_files = []
 
 def getImg(imgName):
 	#MIN_MATCH_COUNT = 10
@@ -33,6 +40,7 @@ def getImg(imgName):
 
 	IMG2BEST = None
 	imgName = ""
+
 	dst = None
 
 	for filepath in glob.iglob('imagesToMatch/templates/*'):
@@ -82,22 +90,27 @@ def getImg(imgName):
 
 	img3 = cv2.drawMatches(img1,MAX_KP1,img2,MAX_KP2,MAX_GOOD,None,**draw_params)
 	print(dst)
-        botLeftX = int(dst[2][0][0])
-        botLeftY = int(dst[2][0][1])
-        botRightX = int(dst[3][0][0])
-        botRightY = int(dst[3][0][1])
-        img3 = cv2.circle(img2, (botLeftX, botLeftY), 20, (255, 0, 0), 2)
-        img3 = cv2.circle(img2, (botRightX, botRightY), 20, (255, 0, 0), 2)
-        xPos = int(botLeftX + (botRightX-botLeftX)/2.0 + 30)
-        yPos = int((botLeftY + botRightY)/2.0 + 150)
-        img3 = cv2.circle(img2, (xPos, yPos), 100, (255, 0, 0), 2)
-        plt.imshow(img2, 'gray'),plt.show()
-        return str(imgName) + "," + str(xPos) + "," + str(yPos)
+	botLeftX = int(dst[2][0][0])
+	botLeftY = int(dst[2][0][1])
+	botRightX = int(dst[3][0][0])
+	botRightY = int(dst[3][0][1])
+	
+	img3 = cv2.circle(img2, (botLeftX, botLeftY), 20, (255, 0, 0), 2)
+	img3 = cv2.circle(img2, (botRightX, botRightY), 20, (255, 0, 0), 2)
+	xPos = int(botLeftX + (botRightX-botLeftX)/2.0 + 30)
+	yPos = int((botLeftY + botRightY)/2.0 + 150)
+	img3 = cv2.circle(img2, (xPos, yPos), 100, (255, 0, 0), 2)
+	plt.imshow(img2, 'gray'),plt.show()
 
-
-UPLOAD_FOLDER = '/home/arushshah/imagematcher/imagesToMatch/'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-user_choice = None
+	print(imgName)
+	
+	if imgName == "imagesToMatch/templates/cafe_menu.jpg":
+		global screen_files
+		screen_files = ["menu.csv", "checkout.csv", "payment.csv"]
+		global cur_screen
+		cur_screen = "cafe_menu"
+	print("current screen is " + str(cur_screen))
+	return str(imgName) + "," + str(xPos) + "," + str(yPos)
 
 @app.route('/')
 def index():
@@ -113,19 +126,27 @@ def upload_file():
     file = request.files['file']
     if file:
 	filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'],filename))
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return "File uploaded"
 
 @app.route('/selection', methods=['GET'])
 def get_input():
-	return render_template("input.html")
+	if cur_screen is None:
+		return "Error"
+	f = open("imagesToMatch/csv/" + str(cur_screen) + ".csv")
+	options = []
+	for line in f:
+		args = line.split(',')
+		if args[0] == "resolution":
+			continue
+		options.append(args[0])
+	return render_template("input.html", selections=options)
 
 @app.route('/select', methods=['POST'])
 def process_input():
 	global user_choice
-	user_input = request.form['choice']
-	user_choice = user_input
-	print(user_input)
+	user_choice = request.form['choice']
+	print(user_choice)
 	return render_template("input.html")
 
 @app.route('/getUserChoice', methods=['GET'])
@@ -135,7 +156,17 @@ def return_choice():
 		return "Error"
 	tmp = user_choice
 	user_choice = None
-	return str(tmp)
+
+	global cur_screen
+	f = open("imagesToMatch/csv/" + str(cur_screen) + ".csv")
+	for line in f:
+		args = line.split(',')
+		print(str(args))
+		if args[0] == tmp:
+			print(args[3])
+			cur_screen = args[3]
+			return str(args[1]) + "," + str(args[2])
+	
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

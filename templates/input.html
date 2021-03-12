@@ -14,21 +14,12 @@
 
 <body>
     <h1>Selections</h1>
-    <form action="/select" method="post">
-        <input class="mybutton" type="submit" name="choice" value="Salad">
-    </form>
-    <form action="/select" method="post">
-      <input class="mybutton" type="submit" name="choice" value="Coffee">
-    </form>
-    <form action="/select" method="post">
-        <input class="mybutton" type="submit" name="choice" value="Burger">
-    </form>
-    <form action="/select" method="post">
-        <input class="mybutton" type="submit" name="choice" value="Fries">
-    </form>
-    <form action="/select" method="post">
-        <input class="mybutton" type="submit" name="choice" value="Hotdog">
-    </form>
+
+    {% for item in selections %}
+        <form action="/select" method="post">
+            <input class="mybutton" type="submit" name="choice" value="{{ item }}">
+        </form>
+    {% endfor %}
 
 </body>
 </html>

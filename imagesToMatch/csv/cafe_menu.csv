@@ -1,0 +1,10 @@
+resolution,2046,1533,cafe_checkout,end
+burger,362,596,cafe_checkout,end
+fries,360,800,cafe_checkout,end
+hotdog,370,1040,cafe_checkout,end
+coffee,1030,590,cafe_checkout,end
+milkshake,1030,814,cafe_checkout,end
+fountain drink,1030,1087,cafe_checkout,end
+bagel,1700,600,cafe_checkout,end
+omelette,1700,820,cafe_checkout,end
+hash browns,1700,1080,cafe_checkout,end
