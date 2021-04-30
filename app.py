@@ -13,6 +13,7 @@ UPLOAD_FOLDER = '/home/arushshah/imagematcher/imagesToMatch/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 user_choice = None
 cur_screen = None
+choice_received = False
 screen_files = []
 
 def getImg(imgName):
@@ -131,23 +132,30 @@ def upload_file():
 
 @app.route('/selection', methods=['GET'])
 def get_input():
+	global choice_received
 	if cur_screen is None:
 		return "Error"
 	f = open("imagesToMatch/csv/" + str(cur_screen) + ".csv")
+	print("Opened file: " + str(cur_screen))
 	options = []
 	for line in f:
+		print(line)
 		args = line.split(',')
 		if args[0] == "resolution":
 			continue
 		options.append(args[0])
+	choice_received = False
 	return render_template("input.html", selections=options)
 
 @app.route('/select', methods=['POST'])
 def process_input():
 	global user_choice
+	global choice_received
 	user_choice = request.form['choice']
 	print(user_choice)
-	return render_template("input.html")
+	while not choice_received:
+		pass
+	return get_input()
 
 @app.route('/getUserChoice', methods=['GET'])
 def return_choice():
@@ -158,13 +166,17 @@ def return_choice():
 	user_choice = None
 
 	global cur_screen
+	global choice_received
 	f = open("imagesToMatch/csv/" + str(cur_screen) + ".csv")
 	for line in f:
 		args = line.split(',')
 		print(str(args))
+		print(tmp)
 		if args[0] == tmp:
 			print(args[3])
 			cur_screen = args[3]
+			print("cur_screen: " + str(cur_screen))
+			choice_received = True
 			return str(args[1]) + "," + str(args[2])
 	
 
