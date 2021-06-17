@@ -6,6 +6,7 @@ import glob
 from werkzeug.utils import secure_filename
 import os
 import csv
+import dbase
 
 app = Flask(__name__)
 
@@ -15,6 +16,11 @@ user_choice = None
 cur_screen = None
 choice_received = False
 screen_files = []
+
+database = "blindtouchbot.db"
+
+conn = dbase.create_connection(database)
+cur = conn.cursor()
 
 def getImg(imgName):
 	#MIN_MATCH_COUNT = 10
@@ -45,26 +51,26 @@ def getImg(imgName):
 	dst = None
 
 	for filepath in glob.iglob('imagesToMatch/templates/*'):
-	    img2 = cv2.imread(filepath,0)
-	    # find the keypoints and descriptors with SIFT
-	    kp1, des1 = sift.detectAndCompute(img1,None)
-	    kp2, des2 = sift.detectAndCompute(img2,None)
+		img2 = cv2.imread(filepath,0)
+		# find the keypoints and descriptors with SIFT
+		kp1, des1 = sift.detectAndCompute(img1,None)
+		kp2, des2 = sift.detectAndCompute(img2,None)
 
-	    matches = flann.knnMatch(des1,des2,k=2)
-	    # store all the good matches as per Lowe's ratio test.
-	    good = []
-	    for m,n in matches:
-		if m.distance < 0.7*n.distance:
-		    good.append(m)
-	    if (len(good) > MAX_MATCHES):
-		MAX_MATCHES = len(good)
-		MAX_GOOD = good
-		IMG2BEST = img2
-		MAX_KP1 = kp1
-		MAX_KP2 = kp2
-		MAX_DES1 = des1
-		MAX_DES2 = des2
-		imgName = filepath
+		matches = flann.knnMatch(des1,des2,k=2)
+		# store all the good matches as per Lowe's ratio test.
+		good = []
+		for m,n in matches:
+			if m.distance < 0.7*n.distance:
+					good.append(m)
+	  if (len(good) > MAX_MATCHES):
+			MAX_MATCHES = len(good)
+			MAX_GOOD = good
+			IMG2BEST = img2
+			MAX_KP1 = kp1
+			MAX_KP2 = kp2
+			MAX_DES1 = des1
+			MAX_DES2 = des2
+			imgName = filepath
 
 	if len(MAX_GOOD)>MIN_MATCH_COUNT:
 	    src_pts = np.float32([ MAX_KP1[m.queryIdx].pt for m in MAX_GOOD ]).reshape(-1,1,2)
@@ -104,6 +110,8 @@ def getImg(imgName):
 	plt.imshow(img2, 'gray'),plt.show()
 
 	print(imgName)
+
+	imgName = imgName.split(".")[0]
 	
 	if imgName == "imagesToMatch/templates/cafe_menu.jpg":
 		global screen_files
