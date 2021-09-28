@@ -19,9 +19,6 @@ screen_files = []
 
 database = "blindtouchbot.db"
 
-conn = dbase.create_connection(database)
-cur = conn.cursor()
-
 def getImg(imgName):
 	#MIN_MATCH_COUNT = 10
 	MIN_MATCH_COUNT = 5
@@ -62,7 +59,7 @@ def getImg(imgName):
 		for m,n in matches:
 			if m.distance < 0.7*n.distance:
 					good.append(m)
-	  if (len(good) > MAX_MATCHES):
+		if (len(good) > MAX_MATCHES):
 			MAX_MATCHES = len(good)
 			MAX_GOOD = good
 			IMG2BEST = img2
@@ -86,7 +83,7 @@ def getImg(imgName):
 	    img2 = cv2.polylines(IMG2BEST,[np.int32(dst)],True,255,3, cv2.LINE_AA)
 
 	else:
-	    print "Not enough matches are found - %d/%d" % (len(MAX_GOOD),MIN_MATCH_COUNT)
+	    print ("Not enough matches are found - %d/%d" % (len(MAX_GOOD),MIN_MATCH_COUNT))
 	    matchesMask = None
 
 
@@ -109,16 +106,12 @@ def getImg(imgName):
 	img3 = cv2.circle(img2, (xPos, yPos), 100, (255, 0, 0), 2)
 	plt.imshow(img2, 'gray'),plt.show()
 
-	print(imgName)
+	imgName = imgName.split(".")[0].split("/")[2]
 
-	imgName = imgName.split(".")[0]
-	
-	if imgName == "imagesToMatch/templates/cafe_menu.jpg":
-		global screen_files
-		screen_files = ["menu.csv", "checkout.csv", "payment.csv"]
-		global cur_screen
-		cur_screen = "cafe_menu"
-	print("current screen is " + str(cur_screen))
+	global cur_screen
+	cur_screen = imgName
+	print("Cur screen is: " + imgName)
+
 	return str(imgName) + "," + str(xPos) + "," + str(yPos)
 
 @app.route('/')
@@ -134,24 +127,24 @@ def match():
 def upload_file():
     file = request.files['file']
     if file:
-	filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return "File uploaded"
+				filename = secure_filename(file.filename)
+				file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+				return "File uploaded"
 
 @app.route('/selection', methods=['GET'])
 def get_input():
 	global choice_received
+	global cur_screen
 	if cur_screen is None:
 		return "Error"
-	f = open("imagesToMatch/csv/" + str(cur_screen) + ".csv")
-	print("Opened file: " + str(cur_screen))
+
 	options = []
-	for line in f:
-		print(line)
-		args = line.split(',')
-		if args[0] == "resolution":
-			continue
-		options.append(args[0])
+	con = dbase.create_connection('blindtouchbot.db')
+	cur = con.cursor()
+	for row in cur.execute("select ENTRY from pages where PAGE_NAME=:name", {"name": cur_screen}):
+		options.append(row[0])
+
+	print(options)
 	choice_received = False
 	return render_template("input.html", selections=options)
 
@@ -186,7 +179,11 @@ def return_choice():
 			print("cur_screen: " + str(cur_screen))
 			choice_received = True
 			return str(args[1]) + "," + str(args[2])
-	
+
+	con = dbase.create_connection('blindtouchbot.db')
+	cur = con.cursor()
+	for row in cur.execute("select * from pages where PAGE_NAME=:name and ENTRY=:entry", {"name": cur_screen, "entry": tmp}):
+		return str(args[0][2]) + "," + str(args[0][3])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
